@@ -43,7 +43,7 @@ def properties_to_dicts(properties: list) -> list[dict]:
             'fill': None,
             'linestyle': line_style,
             'edgecolor': edge_color,
-            'alpha': alpha_face,
+            'alpha': alpha_edge,
             'capstyle': cap_style,
             'joinstyle': join_style,
             'linewidth': line_width,

@@ -7,5 +7,5 @@ def qml_to_dict(filepath: str) -> dict:
     with open(filepath, 'r') as f:
         encoding = f.encoding
         xml_content = f.read().encode(encoding)
-
+    print(xmltodict.parse(xml_content))
     return xmltodict.parse(xml_content)
