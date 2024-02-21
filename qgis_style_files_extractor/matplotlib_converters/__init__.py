@@ -1,4 +1,4 @@
-from .color import rgba_to_hex
+from .color import rgba_to_hex_and_alpha
 from .cap_style import cap_style
 from .join_style import join_style
 from .marker import marker

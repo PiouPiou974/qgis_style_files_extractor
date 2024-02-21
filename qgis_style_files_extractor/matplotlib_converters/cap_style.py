@@ -4,8 +4,13 @@ def cap_style(s: str | None) -> str | None:
     if s is None:
         return None
 
-    if s in ['butt', 'projecting', 'round']:
-        return s
-    if s == 'square':
-        return 'butt'
-    return None
+    matching_cap_style = {
+        'square': 'projecting',
+        'flat': 'butt',
+        'round': 'round',
+    }.get(s, None)
+
+    if matching_cap_style is None:
+        print(f'unexpected cap_style reference "{s}", to implement')
+
+    return matching_cap_style

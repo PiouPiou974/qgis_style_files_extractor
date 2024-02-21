@@ -24,11 +24,10 @@ def hatch_from_fill_style(s: str | None) -> str | None:
         'dense5': '...',
         'dense6': '..',
         'dense7': '.',
-
     }.get(s, None)
 
     if hatch is None:
-        print(f'hatch reference "{s}" not found, to implement')
+        print(f'unexpected hatch reference "{s}", to implement')
 
     return hatch
 

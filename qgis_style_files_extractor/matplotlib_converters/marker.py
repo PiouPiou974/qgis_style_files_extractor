@@ -50,8 +50,15 @@ def marker(s: str | None) -> str | None:
 
     if s in accepted_markers.keys():
         return s
+
     if s in accepted_markers.values():
-        return s
-    if s == 'cross2':
-        return 'X'
-    return None
+        return {v: k for k, v in accepted_markers.items()}[s]
+
+    matching_marker = {
+        'cross2': 'x',
+        'triangle': '4',
+    }.get(s, None)
+
+    if matching_marker is None:
+        print(f'unexpected marker reference "{s}", to implement')
+    return matching_marker

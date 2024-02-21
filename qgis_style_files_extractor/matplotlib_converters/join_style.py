@@ -4,6 +4,13 @@ def join_style(s: str | None) -> str | None:
     if s is None:
         return None
 
-    if s in ['miter', 'round', 'bevel']:
-        return s
-    return None
+    matching_join_style = {
+        'miter': 'miter',
+        'round': 'round',
+        'bevel': 'bevel',
+    }.get(s, None)
+
+    if matching_join_style is None:
+        print(f'unexpected join_style reference "{s}", to implement')
+
+    return matching_join_style
