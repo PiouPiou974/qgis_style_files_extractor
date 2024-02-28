@@ -1,11 +1,14 @@
 import xmltodict
 
 
-def qml_to_dict(filepath: str) -> dict:
+def qml_extract_name_settings(filepath: str) -> tuple[str, dict]:
     assert filepath.find('.qml') != -1, f'not a qml file: {filepath}'
+
+    layer_name = filepath.split('\\')[-1].replace('.qml', '')
 
     with open(filepath, 'r') as f:
         encoding = f.encoding
         xml_content = f.read().encode(encoding)
-    print(xmltodict.parse(xml_content))
-    return xmltodict.parse(xml_content)
+    layer_settings = xmltodict.parse(xml_content)
+    print(layer_settings)
+    return layer_name, layer_settings

@@ -1,26 +1,32 @@
 from typing import Literal
 
-from .qml_reader import qml_to_dict
+from .matplotlib_converters.color import rgba_to_one_letter_color_and_alpha
+from .qml_reader import qml_extract_name_settings
 from .dict_list_manipulations import as_list
+from .qgis_converter import wkb_types
+from .qgis_converter.options_and_properties import get_prop
 from .properties_to_dict import marker__simple_marker, fill__simple_fill, fill__point_pattern_fill, fill__marker_line
 
 
 class QmlToStyles:
-    geometry_type: str
-    style_type: Literal['RuleRenderer', 'singleSymbol']
-    qml_style_categories: list[str]
+    layer_name: str
+    geometry_type: Literal['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon', None]
+    style_type: Literal['singleSymbol', 'categorizedSymbol', 'RuleRenderer']
     symbols: dict[str, list[dict]] = dict()
     rules: list[dict] = list()
+    labeling: dict = dict()
 
     def __init__(self, filepath: str) -> None:
-        layer_setting = qml_to_dict(filepath=filepath)
+        self.layer_name, layer_setting = qml_extract_name_settings(filepath=filepath)
 
         assert 'qgis' in layer_setting.keys()
         layer_setting = layer_setting['qgis']
 
-        assert 'renderer-v2' in layer_setting.keys()
-        self.geometry_type = layer_setting.get('layerGeometryType')
-        self.qml_style_categories = layer_setting.get('styleCategories', '').split('|')
+        assert 'renderer-v2' in layer_setting.keys(), ('This package cannot operate outside renderer-v2. '
+                                                       'Please check QGis version and generate qml file with'
+                                                       'the newest version possible.')
+
+        self.geometry_type = wkb_types.geometry_type_from_wkb_enum(layer_setting.get('layerGeometryType'))
 
         self.style_type = layer_setting['renderer-v2'].get('@type')
 
@@ -30,8 +36,34 @@ class QmlToStyles:
 
         self.symbols_from_renderer(layer_setting)
 
+        if 'labeling' in layer_setting.keys():
+            self.add_labeling(layer_setting)
+
         if self.style_type == 'RuleRenderer':
             self.rules_from_renderer(layer_setting)
+
+    def add_labeling(self, layer_setting: dict) -> None:
+        labeling = dict()
+
+        labeling_settings = layer_setting['labeling']
+        assert labeling_settings['@type'] == 'simple'
+        text_style = labeling_settings['settings']['text-style']
+
+        color, alpha = rgba_to_one_letter_color_and_alpha(text_style['@textColor'])
+        # background_color, background_alpha = rgba_to_hex_and_alpha(text_style['@previewBkgrdColor'])
+
+        labeling['field'] = text_style['@fieldName']
+        labeling['annotate_kwargs'] = {
+            'color': color,
+            'alpha': alpha,
+            'fontsize': int(text_style['@fontSize']),
+            'fontstyle': 'italic' if text_style['@fontItalic'] == '1' else 'normal',
+            'fontweight': int(text_style['@fontWeight']),
+            'fontfamily': text_style['@fontFamily'],
+            # 'backgroundcolor': background_color,
+        }
+
+        self.labeling = labeling
 
     def rules_from_renderer(self, layer_setting: dict) -> None:
         renderer = layer_setting['renderer-v2']
@@ -58,7 +90,9 @@ class QmlToStyles:
             symbol_type = symbol.get('@type')
             assert symbol_type in ['marker', 'fill'], \
                 f'unexpected symbol type {symbol_type}'
-            alpha = float(symbol.get('@alpha'))  # does not seem to be relevant, alpha is coded inside each rgba values
+
+            # does not seem to be relevant, alpha is coded inside each rgba values
+            # alpha = float(symbol.get('@alpha'))
 
             self.symbols[symbol_key] = list()
 
@@ -68,7 +102,8 @@ class QmlToStyles:
                     layer_class = layer.get('@class')
 
                     if layer_class == 'SimpleMarker':
-                        layer_properties_list = marker__simple_marker.properties_to_dicts(layer['prop'])
+                        prop = get_prop(layer)
+                        layer_properties_list = marker__simple_marker.properties_to_dicts(prop)
 
                     else:
                         raise ValueError(f'unexpected layer type {layer_class}')
@@ -77,15 +112,18 @@ class QmlToStyles:
                     layer_class = layer.get('@class')
 
                     if layer_class == 'SimpleFill':
-                        layer_properties_list = fill__simple_fill.properties_to_dicts(layer['prop'])
+                        prop = get_prop(layer)
+                        layer_properties_list = fill__simple_fill.properties_to_dicts(prop)
                     elif layer_class == 'PointPatternFill':
+                        prop = get_prop(layer)
                         layer_properties_list = fill__point_pattern_fill.properties_and_symbol_to_dicts(
-                            properties=layer['prop'],
+                            properties=prop,
                             symbols=layer['symbol'],
                         )
                     elif layer_class == 'MarkerLine':
+                        prop = get_prop(layer)
                         layer_properties_list = fill__marker_line.properties_and_symbol_to_dicts(
-                            properties=layer['prop'],
+                            properties=prop,
                             symbols=layer['symbol'],
                         )
 
@@ -96,3 +134,14 @@ class QmlToStyles:
                     raise ValueError(f'unexpected symbol type {symbol_type}')
 
                 self.symbols[symbol_key].extend(layer_properties_list)
+
+    @property
+    def dict(self) -> dict:
+        return {
+            'name': self.layer_name,
+            'geometry_type': self.geometry_type,
+            'style_type': self.style_type,
+            'symbols': self.symbols,
+            'rules': self.rules,
+            'labeling': self.labeling,
+        }
