@@ -5,7 +5,7 @@ import pprint
 
 class MyTestCase(unittest.TestCase):
     def test_something(self):
-        qml_path = 'qml_samples\\lieux-dits.qml'
+        qml_path = 'qml_samples\\zones_d_urbanisme.qml'
         styles = QmlToStyles(qml_path)
         print(styles.dict)
         self.assertEqual(True, True)  # add assertion here
