@@ -116,23 +116,28 @@ class QmlToStyles:
     def add_labeling(self, layer_setting: dict) -> None:
         labeling = dict()
 
-        labeling_settings = layer_setting['labeling']
-        assert labeling_settings['@type'] == 'simple'
-        text_style = labeling_settings['settings']['text-style']
+        try:
+            labeling_settings = layer_setting['labeling']
+            assert labeling_settings['@type'] == 'simple'
+            text_style = labeling_settings['settings']['text-style']
 
-        color, alpha = rgba_to_one_letter_color_and_alpha(text_style['@textColor'])
-        # background_color, background_alpha = rgba_to_hex_and_alpha(text_style['@previewBkgrdColor'])
+            color, alpha = rgba_to_one_letter_color_and_alpha(text_style['@textColor'])
+            # background_color, background_alpha = rgba_to_hex_and_alpha(text_style['@previewBkgrdColor'])
 
-        labeling['field'] = text_style['@fieldName']
-        labeling['annotate_kwargs'] = {
-            'color': color,
-            'alpha': alpha,
-            'fontsize': int(text_style['@fontSize']),
-            'fontstyle': 'italic' if text_style['@fontItalic'] == '1' else 'normal',
-            'fontweight': int(text_style['@fontWeight']),
-            'fontfamily': text_style['@fontFamily'],
-            # 'backgroundcolor': background_color,
-        }
+            labeling['field'] = text_style['@fieldName']
+            labeling['annotate_kwargs'] = {
+                'color': color,
+                'alpha': alpha,
+                'fontsize': int(text_style['@fontSize']),
+                'fontstyle': 'italic' if text_style['@fontItalic'] == '1' else 'normal',
+                'fontweight': int(text_style['@fontWeight']),
+                'fontfamily': text_style['@fontFamily'],
+                # 'backgroundcolor': background_color,
+            }
+
+        except Exception as e:
+            print(e)
+            labeling = {}
 
         self.labeling = labeling
 
