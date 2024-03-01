@@ -11,6 +11,7 @@ from .properties_to_dict import (marker__simple_marker,
                                  fill__point_pattern_fill,
                                  fill__marker_line,
                                  line__simple_line,
+                                 fill__centroid_fill,
                                  )
 
 
@@ -93,18 +94,14 @@ class QmlToStyles:
                     'colors': listed_color_map,
                 },
             }
-            print(self.symbols)
-
 
         if self.style_type == 'singlebandpseudocolor':
             extract_single_band_pseudo_color()
         else:
             raise ValueError
 
-
     def extract_vector_styles(self, layer_setting: dict) -> None:
         self.geometry_type = wkb_types.geometry_type_from_wkb_enum(layer_setting.get('layerGeometryType'))
-
         self.style_type = layer_setting['renderer-v2'].get('@type')
 
         assert self.style_type in ['RuleRenderer', 'singleSymbol', 'categorizedSymbol'], \
@@ -181,7 +178,7 @@ class QmlToStyles:
                 f'unexpected symbol type {symbol_type}'
 
             # alpha is coded inside each rgba values, but this is a general multiplier
-            general_alpha = float(symbol.get('@alpha'))
+            general_alpha = float(symbol.get('@alpha', "1"))
 
             self.symbols[symbol_key] = list()
 
@@ -214,6 +211,7 @@ class QmlToStyles:
                     if layer_class == 'SimpleFill':
                         prop = get_prop(layer)
                         layer_properties_list = fill__simple_fill.properties_to_dicts(prop, general_alpha)
+
                     elif layer_class == 'PointPatternFill':
                         prop = get_prop(layer)
                         layer_properties_list = fill__point_pattern_fill.properties_and_symbol_to_dicts(
@@ -226,6 +224,13 @@ class QmlToStyles:
                         layer_properties_list = fill__marker_line.properties_and_symbol_to_dicts(
                             properties=prop,
                             symbols=layer['symbol'],
+                            general_alpha=general_alpha,
+                        )
+
+                    elif layer_class == 'CentroidFill':
+                        prop = get_prop(layer)
+                        layer_properties_list = fill__centroid_fill.properties_to_dicts(
+                            properties=prop,
                             general_alpha=general_alpha,
                         )
 

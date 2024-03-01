@@ -2,6 +2,12 @@
 
 
 def get_prop(layer: dict) -> list:
+    # nested symbol :
+    if 'symbol' in layer.keys():
+        print('nested symbol')
+        assert type(layer['symbol']['layer']) is dict
+        return get_prop(layer['symbol']['layer'])
+
     if 'prop' in layer.keys():
         return layer['prop']
 

@@ -7,11 +7,12 @@ def rgb_hex_and_alpha_to_rgba(hex_color: str, alpha: int) -> tuple[float, float,
 
 
 def rgba_to_hex_and_alpha(s: str | None) -> tuple[str | None, float | None]:
-
     if s is None:
         return None, None
+
     r, g, b, alpha = (int(v)/255 for v in s.split(','))
-    return matplotlib.colors.to_hex((r, g, b), keep_alpha=False), alpha
+    color = matplotlib.colors.to_hex((r, g, b), keep_alpha=False)
+    return color, alpha
 
 
 def rgba_to_one_letter_color_and_alpha(s: str) -> tuple[str | None, str | None]:

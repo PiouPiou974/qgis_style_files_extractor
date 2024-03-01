@@ -57,6 +57,7 @@ def marker(s: str | None) -> str | None:
     matching_marker = {
         'cross2': 'x',
         'triangle': '4',
+        'diamond': 'D',
     }.get(s, None)
 
     if matching_marker is None:
