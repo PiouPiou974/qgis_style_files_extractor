@@ -4,7 +4,7 @@ from ..dict_list_manipulations import get_from_k_v_list, as_list
 from .. import matplotlib_converters as mpl_conv
 
 
-def properties_and_symbol_to_dicts(properties: list, symbols: list) -> list[dict]:
+def properties_and_symbol_to_dicts(properties: list, symbols: list, general_alpha: float) -> list[dict]:
     warnings.warn('MarkerLine fill is currently not well supported in matplotlib. Transformed into dots.')
     # FutureDev
     interval = mpl_conv.size(get_from_k_v_list(k_v_list=properties, key='interval'))
@@ -29,7 +29,7 @@ def properties_and_symbol_to_dicts(properties: list, symbols: list) -> list[dict
             'linestyle': selected_line_style,
             'linewidth': size,
             'edgecolor': color,  # in QGis, hatch color is face color. In matplotlib, edge color.
-            'alpha': alpha,
+            'alpha': alpha * general_alpha,
         })
 
     return properties_list

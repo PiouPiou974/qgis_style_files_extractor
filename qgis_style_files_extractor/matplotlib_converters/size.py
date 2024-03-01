@@ -4,4 +4,7 @@ def size(s: str | None) -> float | None:
     if s is None:
         return None
 
+    if float(s) == 0:  # case hair-line
+        return 0.5
+
     return float(s) * 2.83465

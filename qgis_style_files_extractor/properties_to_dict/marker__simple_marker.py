@@ -2,7 +2,7 @@ from ..dict_list_manipulations import get_from_k_v_list, no_empty_values
 from .. import matplotlib_converters as mpl_conv
 
 
-def properties_to_dicts(properties: list) -> list[dict]:
+def properties_to_dicts(properties: list, general_alpha: float) -> list[dict]:
     marker = mpl_conv.marker(get_from_k_v_list(k_v_list=properties, key='name'))
     marker_size = mpl_conv.size(get_from_k_v_list(k_v_list=properties, key='size'))
 
@@ -20,10 +20,13 @@ def properties_to_dicts(properties: list) -> list[dict]:
         {
             'marker': marker,
             'markersize': marker_size,
-            'markerfacecolor': marker_face_color,
-            'markeredgewidth': marker_edge_width,
-            'markeredgecolor': marker_edge_color,
-            'capstyle': cap_style,
-            'joinstyle': join_style,
+            'color': marker_face_color,
+            'alpha': alpha_marker_face * general_alpha,
+            # next values are not managed by PathCollection
+            # 'markerfacecolor': marker_face_color,
+            # 'markeredgewidth': marker_edge_width,
+            # 'markeredgecolor': marker_edge_color,
+            # 'capstyle': cap_style,
+            # 'joinstyle': join_style,
         }
     ]

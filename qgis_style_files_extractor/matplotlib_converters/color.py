@@ -6,7 +6,7 @@ def rgb_hex_and_alpha_to_rgba(hex_color: str, alpha: int) -> tuple[float, float,
     return matplotlib.colors.to_rgba(hex_color, alpha / 255)
 
 
-def rgba_to_hex_and_alpha(s: str | None) -> tuple[str | None, str | None]:
+def rgba_to_hex_and_alpha(s: str | None) -> tuple[str | None, float | None]:
 
     if s is None:
         return None, None

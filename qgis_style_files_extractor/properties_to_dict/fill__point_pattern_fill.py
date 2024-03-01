@@ -4,7 +4,7 @@ from ..dict_list_manipulations import get_from_k_v_list, as_list
 from .. import matplotlib_converters as mpl_conv
 
 
-def properties_and_symbol_to_dicts(properties: list, symbols: list) -> list[dict]:
+def properties_and_symbol_to_dicts(properties: list, symbols: list, general_alpha: float) -> list[dict]:
     warnings.warn('Custom point pattern fill is currently not well supported in matplotlib, using hatching. '
                   'Differences may arise in symbology.')
 
@@ -57,8 +57,7 @@ def properties_and_symbol_to_dicts(properties: list, symbols: list) -> list[dict
             'fill': None,
             'hatch': ''.join([accepted_hatching_symbol for _ in range(density)]),
             'edgecolor': color,  # in QGis, hatch color is face color. In matplotlib, edge color.
-            'alpha': alpha,
+            'alpha': alpha * general_alpha,
         })
-
 
     return properties_list

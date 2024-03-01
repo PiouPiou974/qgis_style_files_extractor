@@ -7,13 +7,15 @@ def geometry_type_from_wkb_enum(
 ) -> Literal['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon', None]:
     # https://qgis.org/pyqgis/3.28/core/QgsWkbTypes.html#qgis.core.QgsWkbTypes
     # Wkb enum from QGis
+    # curiously, QGis appears to be using the WKB standards minus 1 (1 is not a Point but a LineString)
     geometry_type = {
-        '1': 'Point',
-        '2': 'LineString',
-        '3': 'Polygon',
-        '4': 'MultiPoint',
-        '5': 'MultiLineString',
-        '6': 'MultiPolygon',
+        '0': 'Point',
+        '1': 'LineString',
+        '2': 'Polygon',
+        '3': 'MultiPoint',
+        '4': 'MultiLineString',
+        '5': 'MultiPolygon',
+        '6': 'GeometryCollection',
     }.get(wkb_enum)
 
     if geometry_type is None:

@@ -6,7 +6,12 @@ from .qml_reader import qml_extract_name_settings
 from .dict_list_manipulations import as_list
 from .qgis_converter import wkb_types
 from .qgis_converter.options_and_properties import get_prop
-from .properties_to_dict import marker__simple_marker, fill__simple_fill, fill__point_pattern_fill, fill__marker_line
+from .properties_to_dict import (marker__simple_marker,
+                                 fill__simple_fill,
+                                 fill__point_pattern_fill,
+                                 fill__marker_line,
+                                 line__simple_line,
+                                 )
 
 
 class QmlToStyles:
@@ -17,6 +22,7 @@ class QmlToStyles:
     style_type: Literal['singleSymbol', 'categorizedSymbol', 'RuleRenderer', 'singlebandpseudocolor']
     symbols: dict[str, list[dict]] = dict()
     rules: list[dict] = list()
+    categories: dict = dict()
     labeling: dict = dict()
 
     def __init__(self, filepath: str) -> None:
@@ -101,17 +107,24 @@ class QmlToStyles:
 
         self.style_type = layer_setting['renderer-v2'].get('@type')
 
-        assert self.style_type in ['RuleRenderer', 'singleSymbol'], \
+        assert self.style_type in ['RuleRenderer', 'singleSymbol', 'categorizedSymbol'], \
             f'Style renderer type not planned : {self.style_type}'
-        # todo : categorizedSymbol
 
-        self.symbols_from_renderer(layer_setting)
+        if self.style_type == 'singleSymbol':
+            self.symbols_from_renderer(layer_setting)
+
+        elif self.style_type == 'RuleRenderer':
+            self.symbols_from_renderer(layer_setting)
+            self.rules_from_renderer(layer_setting)
+
+        elif self.style_type == 'categorizedSymbol':
+            self.symbols_from_renderer_case_categorized(layer_setting)
+
+        else:
+            raise ValueError
 
         if 'labeling' in layer_setting.keys():
             self.add_labeling(layer_setting)
-
-        if self.style_type == 'RuleRenderer':
-            self.rules_from_renderer(layer_setting)
 
     def add_labeling(self, layer_setting: dict) -> None:
         labeling = dict()
@@ -164,22 +177,33 @@ class QmlToStyles:
         for symbol in symbols:
             symbol_key = symbol.get('@name')
             symbol_type = symbol.get('@type')
-            assert symbol_type in ['marker', 'fill'], \
+            assert symbol_type in ['marker', 'fill', 'line'], \
                 f'unexpected symbol type {symbol_type}'
 
-            # does not seem to be relevant, alpha is coded inside each rgba values
-            # alpha = float(symbol.get('@alpha'))
+            # alpha is coded inside each rgba values, but this is a general multiplier
+            general_alpha = float(symbol.get('@alpha'))
 
             self.symbols[symbol_key] = list()
 
             assert 'layer' in symbol.keys()
             for layer in as_list(symbol['layer']):
-                if symbol_type == 'marker':
+                if symbol_type == 'line':
+                    layer_class = layer.get('@class')
+
+                    if layer_class == 'SimpleLine':
+                        prop = get_prop(layer)
+                        layer_properties_list = line__simple_line.properties_to_dicts(prop, general_alpha)
+
+                    else:
+                        print(layer)
+                        raise ValueError(f'unexpected layer type {layer_class}')
+
+                elif symbol_type == 'marker':
                     layer_class = layer.get('@class')
 
                     if layer_class == 'SimpleMarker':
                         prop = get_prop(layer)
-                        layer_properties_list = marker__simple_marker.properties_to_dicts(prop)
+                        layer_properties_list = marker__simple_marker.properties_to_dicts(prop, general_alpha)
 
                     else:
                         raise ValueError(f'unexpected layer type {layer_class}')
@@ -189,18 +213,20 @@ class QmlToStyles:
 
                     if layer_class == 'SimpleFill':
                         prop = get_prop(layer)
-                        layer_properties_list = fill__simple_fill.properties_to_dicts(prop)
+                        layer_properties_list = fill__simple_fill.properties_to_dicts(prop, general_alpha)
                     elif layer_class == 'PointPatternFill':
                         prop = get_prop(layer)
                         layer_properties_list = fill__point_pattern_fill.properties_and_symbol_to_dicts(
                             properties=prop,
                             symbols=layer['symbol'],
+                            general_alpha=general_alpha,
                         )
                     elif layer_class == 'MarkerLine':
                         prop = get_prop(layer)
                         layer_properties_list = fill__marker_line.properties_and_symbol_to_dicts(
                             properties=prop,
                             symbols=layer['symbol'],
+                            general_alpha=general_alpha,
                         )
 
                     else:
@@ -211,6 +237,24 @@ class QmlToStyles:
 
                 self.symbols[symbol_key].extend(layer_properties_list)
 
+    def symbols_from_renderer_case_categorized(self, layer_setting: dict) -> None:
+        renderer = layer_setting['renderer-v2']
+
+        assert 'colorramp' in renderer.keys()
+        color_ramp_type = renderer['colorramp']['@type']  # eg: "randomcolors"
+        color_map_name = 'jet'  # todo : make a matching table between color ramp type and matplotlib cmap
+
+        assert '@attr' in renderer.keys()
+        key = renderer['@attr']
+
+        self.categories = {
+            'color_map_name': color_map_name,
+            'key': key
+        }
+        # get the first symbol
+        layer_setting['renderer-v2']['symbols']['symbol'] = layer_setting['renderer-v2']['symbols']['symbol'][0]
+        self.symbols_from_renderer(layer_setting)
+
     @property
     def dict(self) -> dict:
         return {
@@ -220,4 +264,5 @@ class QmlToStyles:
             'symbols': self.symbols,
             'rules': self.rules,
             'labeling': self.labeling,
+            'categories': self.categories,
         }

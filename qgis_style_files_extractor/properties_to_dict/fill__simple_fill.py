@@ -2,7 +2,7 @@ from ..dict_list_manipulations import get_from_k_v_list
 from .. import matplotlib_converters as mpl_conv
 
 
-def properties_to_dicts(properties: list) -> list[dict]:
+def properties_to_dicts(properties: list, general_alpha: float) -> list[dict]:
     face_color_rgba = get_from_k_v_list(k_v_list=properties, key='color')
     face_color, alpha_face = mpl_conv.rgba_to_hex_and_alpha(face_color_rgba)
 
@@ -25,7 +25,7 @@ def properties_to_dicts(properties: list) -> list[dict]:
         properties_list.append({
             'fill': fill,
             'facecolor': face_color,
-            'alpha': alpha_face,
+            'alpha': alpha_face * general_alpha,
         })
 
     if hatch:
@@ -34,7 +34,7 @@ def properties_to_dicts(properties: list) -> list[dict]:
             'fill': None,
             'hatch': hatch,
             'edgecolor': face_color,  # in QGis, hatch color is face color. In matplotlib, edge color.
-            'alpha': alpha_face,
+            'alpha': alpha_face * general_alpha,
         })
 
     if line_style:
@@ -43,7 +43,7 @@ def properties_to_dicts(properties: list) -> list[dict]:
             'fill': None,
             'linestyle': line_style,
             'edgecolor': edge_color,
-            'alpha': alpha_edge,
+            'alpha': alpha_edge * general_alpha,
             'capstyle': cap_style,
             'joinstyle': join_style,
             'linewidth': line_width,
